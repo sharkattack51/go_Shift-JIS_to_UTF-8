@@ -1,5 +1,12 @@
 package main
 
+/*
+Code snipet for convert UTF-8 from Shift-JIS.
+
+Reference source:
+http://qiita.com/nobuhito/items/ff782f64e32f7ed95e43
+*/
+
 import (
 	"bytes"
 	"flag"
@@ -8,11 +15,20 @@ import (
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
 	"io/ioutil"
-	"net"
-	"strconv"
 	"strings"
 )
 
+func main() {
+	msg := ""
+	flag.Parse()
+	if flag.NArg() >= 1 {
+		msg, _ = to_utf8(flag.Arg(0))
+	}
+
+	fmt.Println("msg:", msg)
+}
+
+// Shift-JIS -> UTF-8
 func to_utf8(str string) (string, error) {
 	body, err := ioutil.ReadAll(transform.NewReader(strings.NewReader(str), japanese.ShiftJIS.NewEncoder()))
 	if err != nil {
@@ -42,37 +58,4 @@ func to_utf8(str string) (string, error) {
 		}
 	}
 	return string(f), nil
-}
-
-func sendBroadcast(msg string, port int) {
-	BROADCAST_IPv4 := net.IPv4(255, 255, 255, 255)
-	socket, _ := net.DialUDP("udp4", nil, &net.UDPAddr{IP: BROADCAST_IPv4, Port: port})
-	socket.Write([]byte(msg))
-}
-
-func main() {
-	msg := ""
-	port := 12342
-
-	flag.Parse()
-	if flag.NArg() >= 1 {
-		str, _ := to_utf8(flag.Arg(0))
-		msg = strings.Replace(str, "__tab__", "\t", 1)
-		if flag.NArg() >= 2 {
-			num1, err := strconv.Atoi(flag.Arg(1))
-			if err != nil {
-				msg = msg + "\t" + flag.Arg(1)
-				if flag.NArg() >= 3 {
-					num2, _ := strconv.Atoi(flag.Arg(2))
-					port = num2
-				}
-			} else {
-				port = num1
-			}
-		}
-	}
-
-	fmt.Println("msg:", msg)
-	fmt.Println("port:", port)
-	sendBroadcast(msg, port)
 }
